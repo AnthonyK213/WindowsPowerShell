@@ -37,16 +37,9 @@ function chcp {
 function git_root {
     $dir = $executionContext.SessionState.Path.CurrentLocation.Path
     while (1) {
-        $child = @(Get-ChildItem -Force -Path $dir -Name)
-        if ($child -contains ".git") { return $dir }
-        try {
-            $crt = $dir
-            $dir = (Get-Item -Force $dir).Parent.FullName
-        } catch {
-            break
-        }    
+        if (@(Get-ChildItem -Force -Path $dir -Name) -contains ".git") { return $dir }
+        try { $dir = (Get-Item -Force $dir).Parent.FullName } catch { break }    
     }
-    #Write-Host "Not a git repository."
     return 0
 }
 function git_branch {
@@ -54,12 +47,8 @@ function git_branch {
     if ($git_root -ne 0) {
         try {
             $git_head = Get-Item -Force $git_root\.git\HEAD
-            $content = @(Get-Content $git_head)[0]
-            $branch = @($content -split "/")[-1]
-            return $branch
-        } catch {
-            #"Not a valid git repository."
-        }
+            return @(@(Get-Content $git_head)[0] -split "/")[-1]
+        } catch { }
     }
     return 0
 }

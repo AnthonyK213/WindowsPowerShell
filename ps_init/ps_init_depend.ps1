@@ -13,5 +13,6 @@ function enw {
 
 # For vim worksession
 function vims  { nvim.exe -S $args }
-function vim.  { nvim.exe $executionContext.SessionState.Path.CurrentLocation }
 function gvims { nvim-qt.exe -- -S $args }
+function vim.  { nvim.exe $executionContext.SessionState.Path.CurrentLocation }
+function gvim. { nvim-qt.exe $executionContext.SessionState.Path.CurrentLocation }

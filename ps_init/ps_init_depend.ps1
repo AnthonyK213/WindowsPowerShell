@@ -16,4 +16,5 @@ function vims  { nvim.exe -S $args }
 function gvims { nvim-qt.exe -- -S $args }
 function vim.  { nvim.exe $executionContext.SessionState.Path.CurrentLocation }
 function gvim. { nvim-qt.exe $executionContext.SessionState.Path.CurrentLocation }
-function gviml { nvim-qt.exe -qwindowgeometry 720x900 -- --cmd "let g:init_src = 'light'" }
+function vil   { nvim.exe --cmd "let g:init_src = 'light'" }
+function gvil  { nvim-qt.exe -qwindowgeometry 720x900 -- --cmd "let g:init_src = 'light'" }

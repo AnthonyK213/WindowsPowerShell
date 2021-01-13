@@ -3,6 +3,7 @@ Set-Alias vi       nvim.exe
 Set-Alias vim      nvim.exe
 Set-Alias emx      runemacs.exe
 Set-Alias bld      blender.exe
+Set-Alias gcc      clang.exe
 
 # Emacs(Win) really sucks!
 function enw {

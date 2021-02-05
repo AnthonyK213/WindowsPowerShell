@@ -22,10 +22,10 @@ function prompt {
     $f_cyan   = "$ESC[38;5;38m"
     $f_grey   = "$ESC[38;5;8m"
     $f_green  = "$ESC[38;5;114m"
-    
+
     # Git information
     $git_info = if ($git_branch -ne 0) { "$f_grey" + "on$f_deft git:$f_cyan$git_branch " }
-    
+
     Write-Host("$f_blue" + "PS-[$codepage]" + $(if ($isAdmin) 
                { "$f_red [ADMIN] $f_grey@ $f_red$env:ComputerName" } else
                { "$f_cyan $env:UserName $f_grey@ $f_green$env:ComputerName" }) +

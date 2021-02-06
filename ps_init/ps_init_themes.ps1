@@ -10,6 +10,7 @@ function prompt {
     $OutputEncoding = [System.Console]::InputEncoding = [System.Console]::OutputEncoding
     $codepage = $OutputEncoding.BodyName
     $git_branch = git_branch
+    $git_status = $(git status --porcelain)
 
     $host.UI.RawUI.WindowTitle = if ($isAdmin) { "[ADMIN] $dirName" } else { "$dirName" }
 
@@ -24,11 +25,17 @@ function prompt {
     $f_green  = "$ESC[38;5;114m"
 
     # Git information
-    $git_info = if ($git_branch -ne 0) { "$f_grey" + "on$f_deft git:$f_cyan$git_branch " }
+    $git_info = if ($git_branch -ne 0) {
+                    "$f_grey" + "on$f_deft git:$f_cyan$git_branch" +
+                    $(if ($git_status -match '^\?\?') { "$f_yellow U " }
+                      elseif ($git_status -match '^ M') { "$f_red M " }
+                      else { "$f_green o " }) }
+
 
     Write-Host("$f_blue" + "PS-[$codepage]" + $(if ($isAdmin) 
                { "$f_red [ADMIN] $f_grey@ $f_red$env:ComputerName" } else
                { "$f_cyan $env:UserName $f_grey@ $f_green$env:ComputerName" }) +
                  "$f_grey in $f_yellow$location $git_info" + "$f_deft[$time]")
+
     return "$f_red>" * ($nestedPromptLevel + 1) + " "
 }

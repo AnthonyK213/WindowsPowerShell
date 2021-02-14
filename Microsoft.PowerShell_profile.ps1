@@ -1,3 +1,3 @@
-. $PSScriptRoot\ps_init\ps_init_basics.ps1
-. $PSScriptRoot\ps_init\ps_init_depend.ps1
-. $PSScriptRoot\ps_init\ps_init_themes.ps1
+. $PSScriptRoot\init\basics.ps1
+. $PSScriptRoot\init\depend.ps1
+. $PSScriptRoot\init\themes.ps1

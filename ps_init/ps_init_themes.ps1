@@ -37,5 +37,5 @@ function prompt {
                { "$f_cyan $env:UserName $f_grey@ $f_green$env:ComputerName" }) +
                  "$f_grey in $f_yellow$location $git_info" + "$f_deft[$time]")
 
-    return "$f_red>" * ($nestedPromptLevel + 1) + " "
+    return "$f_red>" * ($nestedPromptLevel + 1) + "$f_deft "
 }

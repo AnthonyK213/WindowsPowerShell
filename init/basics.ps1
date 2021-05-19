@@ -24,21 +24,21 @@ function chcp {
         chcp.com
     } else {
         try {
-            $OutputEncoding = 
-            [System.Console]::InputEncoding = 
-            [System.Console]::OutputEncoding =  
+            $OutputEncoding =
+            [System.Console]::InputEncoding =
+            [System.Console]::OutputEncoding =
             [Text.Encoding]::GetEncoding($args[0])
         } catch {
             "Invalid code page"
         }
-    } 
+    }
 }
 ## Git util
 function git_root {
     $dir = $executionContext.SessionState.Path.CurrentLocation.Path
     while (1) {
         if (@(Get-ChildItem -Force -Path $dir -Name) -contains ".git") { return $dir }
-        try { $dir = (Get-Item -Force $dir).Parent.FullName } catch { break }    
+        try { $dir = (Get-Item -Force $dir).Parent.FullName } catch { break }
     }
     return 0
 }

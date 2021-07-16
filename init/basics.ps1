@@ -1,5 +1,9 @@
 # Varialbles
-$user_path = (Get-Item $env:OneDrive).Parent.FullName
+try {
+    $user_path = (Get-Item $env:OneDrive).Parent.FullName
+} catch {
+    $user_path = (Get-Item $env:HOMEPATH).FullName
+}
 
 # Alias
 ## System function

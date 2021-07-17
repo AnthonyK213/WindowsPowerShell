@@ -1,8 +1,8 @@
 # Varialbles
-try {
-    $user_path = (Get-Item $env:OneDrive).Parent.FullName
-} catch {
-    $user_path = (Get-Item $env:HOMEPATH).FullName
+$user_path = if (Test-Path env:OneDrive) {
+    (Get-Item $env:OneDrive).Parent.FullName
+} else {
+    (Get-Item $env:HOMEPATH).FullName
 }
 
 # Alias
@@ -57,7 +57,7 @@ function git_branch {
     return 0
 }
 ## Set-Location
-function cda {Set-Location D:\App}
+function cdb {Set-Location $user_path\bin}
 function cdd {Set-Location $user_path\Desktop}
 function cdh {Set-Location $user_path}
 function cdr {Set-Location $user_path\Documents\Repos}

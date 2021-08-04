@@ -16,7 +16,7 @@ function vims  { nvim.exe -S $args }
 function gvims { nvim-qt.exe -- -S $args }
 function vim.  { nvim.exe $executionContext.SessionState.Path.CurrentLocation }
 function gvim. { nvim-qt.exe $executionContext.SessionState.Path.CurrentLocation }
-function nano  { nvim.exe --cmd "let g:init_src='nano'" $args }
+function nano  { nvim.exe --cmd "let g:nvim_init_src='nano'" $args }
 function gnano { nvim-qt.exe -qwindowgeometry 720x900 -- --cmd "let g:nvim_init_src='nano'" $args }
 
 # Rust

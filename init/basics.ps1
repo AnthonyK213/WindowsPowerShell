@@ -16,6 +16,7 @@ Set-Alias grep     findstr
 
 # Shortcut
 Set-PSReadlineKeyHandler -Key ctrl+d -Function DeleteCharOrExit
+Set-PSReadLineOption -EditMode Emacs
 
 # Function
 ## Show all

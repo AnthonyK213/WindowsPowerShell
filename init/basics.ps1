@@ -58,11 +58,8 @@ function git_branch {
     return 0
 }
 ## Set-Location
-function cdb {Set-Location $user_path\bin}
 function cdd {Set-Location $user_path\Desktop}
 function cdh {Set-Location $user_path}
-function cdr {Set-Location $user_path\Documents\Repos}
-function cdt {Set-Location $user_path\TimeLine}
 function cdg {
     $git_rt = git_root
     if ($git_rt -eq 0) {

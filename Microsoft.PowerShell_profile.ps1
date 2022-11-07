@@ -1,9 +1,11 @@
 # Varialbles
-$user_path = if (Test-Path env:OneDrive) {
-    (Get-Item $env:OneDrive).Parent.FullName
+if (Test-Path $PSScriptRoot\config.ps1 -PathType Leaf) {
+  . $PSScriptRoot\config.ps1
 }
-else {
-    (Get-Item $env:HOMEPATH).FullName
+$user_path = if (Test-Path env:OneDrive) {
+  (Get-Item $env:OneDrive).Parent.FullName
+} else {
+  (Get-Item $env:HOMEPATH).FullName
 }
 $RUSTUP_DIST_SERVER = "https://mirrors.tuna.tsinghua.edu.cn/rustup"
 
@@ -30,31 +32,29 @@ function cdd { Set-Location $user_path\Desktop }
 function cdh { Set-Location $user_path }
 
 function cdg {
-    $git_root = git_root
-    if ($git_root -eq 0) {
-        "Not a git repository"
-    }
-    else {
-        Set-Location $git_root
-    }
+  $git_root = git_root
+  if ($git_root -eq 0) {
+    "Not a git repository"
+  } else {
+    Set-Location $git_root
+  }
 }
 
 # Code page.
 function chcp {
-    if ($args.Count -eq 0) {
-        chcp.com
+  if ($args.Count -eq 0) {
+    chcp.com
+  } else {
+    try {
+      $OutputEncoding =
+        [System.Console]::InputEncoding =
+        [System.Console]::OutputEncoding =
+        [Text.Encoding]::GetEncoding($args[0])
     }
-    else {
-        try {
-            $OutputEncoding =
-            [System.Console]::InputEncoding =
-            [System.Console]::OutputEncoding =
-            [Text.Encoding]::GetEncoding($args[0])
-        }
-        catch {
-            "Invalid code page"
-        }
+    catch {
+      "Invalid code page"
     }
+  }
 }
 
 # `ls -a`
@@ -65,64 +65,61 @@ function exp. { explorer . }
 
 # Get git root. If not a git repository, return 0.
 function git_root {
-    $dir = $executionContext.SessionState.Path.CurrentLocation.Path
-    while (1) {
-        if (@(Get-ChildItem -Force -Path $dir -Name) -contains ".git") { return $dir }
-        try { $dir = (Get-Item -Force $dir).Parent.FullName } catch { break }
-    }
-    return 0
+  $dir = $executionContext.SessionState.Path.CurrentLocation.Path
+  while (1) {
+    if (Test-Path "$dir\.git" -PathType Container) { return $dir }
+    try { $dir = (Get-Item -Force $dir).Parent.FullName } catch { break }
+  }
+  return 0
 }
 
 # Get git branch. If not a git repository, return 0.
 function git_branch {
-    $git_root = git_root
-    if ($git_root -ne 0) {
-        try {
-            $git_head = Get-Item -Force $git_root\.git\HEAD
-            return @(@(Get-Content $git_head)[0] -split "/")[-1]
-        }
-        catch { }
+  $git_root = git_root
+  if ($git_root -ne 0) {
+    try {
+      $git_head = Get-Item -Force $git_root\.git\HEAD
+      return @(@(Get-Content $git_head)[0] -split "/")[-1]
     }
-    return 0
+    catch { }
+  }
+  return 0
 }
 
 # Edit a config file according to a regex pattern.
 # editConfig(file_path, pattern, replace)
 function editConfig {
-    if ($args.Count -eq 3) {
-        $file_path = $args[0]
-        $pattern = $args[1]
-        $new_line = $args[2]
-        $file_content = Get-Content $file_path
-        if (($file_content | ForEach-Object { $_ -match $pattern }) -contains $true) {
-            $file_content -replace $pattern, $new_line | Set-Content $file_path
-        }
-        else {
-            Add-Content -Path $file_path -Value $new_line
-        }
+  if ($args.Count -eq 3) {
+    $file_path = $args[0]
+    $pattern = $args[1]
+    $new_line = $args[2]
+    $file_content = Get-Content $file_path
+    if (($file_content | ForEach-Object { $_ -match $pattern }) -contains $true) {
+      $file_content -replace $pattern, $new_line | Set-Content $file_path
+    } else {
+      Add-Content -Path $file_path -Value $new_line
     }
-    elseif ($args.Count -eq 2) {
-        $file_path = $args[0]
-        $pattern = $args[1]
-        $file_content -replace $pattern, "" | Set-Content $file_path
-    }
-    else {
-        "Invalid argument"
-    }
+  } elseif ($args.Count -eq 2) {
+    $file_path = $args[0]
+    $pattern = $args[1]
+    $file_content -replace $pattern, "" | Set-Content $file_path
+  } else {
+    "Invalid argument"
+  }
 }
 
 # Configure the porxy.
 function proxy {
-    git.exe config --global http.proxy http://127.0.0.1:10809
-    git.exe config --global https.proxy http://127.0.0.1:10809
-    editConfig $HOME\.curlrc '^proxy\s*=\s*.*$' "proxy=http://127.0.0.1:10809"
+  git.exe config --global http.proxy $user_proxy
+  git.exe config --global https.proxy $user_proxy
+  editConfig $HOME\.curlrc '^proxy\s*=\s*.*$' "proxy=$user_proxy"
 }
 
 # No proxy.
 function unproxy {
-    git.exe config --global --unset http.proxy
-    git.exe config --global --unset https.proxy
-    editConfig $HOME\.curlrc '^proxy\s*=\s*.*$'
+  git.exe config --global --unset http.proxy
+  git.exe config --global --unset https.proxy
+  editConfig $HOME\.curlrc '^proxy\s*=\s*.*$'
 }
 
 # Neovim
@@ -142,6 +139,8 @@ function gnano { nvim-qt.exe -qwindowgeometry 1280x800 -- --cmd "let g:nvim_init
 
 # Prompt style, color scheme from `onedark`.
 function prompt {
+  $exitOk = $?
+  $exitCode = $LASTEXITCODE
   $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
   $principal = [Security.Principal.WindowsPrincipal] $identity
   $adminRole = [Security.Principal.WindowsBuiltInRole]::Administrator
@@ -169,15 +168,16 @@ function prompt {
 
   $git_info = if ($git_branch -ne 0) {
     "$f_grey" + "on$f_deft git:$f_cyan$git_branch" +
-    $(if ($git_status -match '^\?\?') { "$f_yellow U " }
-      elseif ($git_status -match '^ M') { "$f_red M " }
-      else { "$f_green o " }) 
+      $(if ($git_status -match '^\?\?') { "$f_yellow U " }
+          elseif ($git_status -match '^ M') { "$f_red M " }
+          else { "$f_green o " }) 
   }
 
   Write-Host("$f_blue" + "PS-[$codepage]" + $(if ($isAdmin)
-      { "$f_red [ADMIN] $f_grey@ $f_red$env:ComputerName" } else
-      { "$f_cyan $env:UserName $f_grey@ $f_green$env:ComputerName" }) +
-    "$f_grey in $f_yellow$location $git_info" + "$f_deft[$time]")
+        { "$f_red [ADMIN] $f_grey@ $f_red$env:ComputerName" } else
+        { "$f_cyan $env:UserName $f_grey@ $f_green$env:ComputerName" }) +
+      "$f_grey in $f_yellow$location $git_info" + "$f_deft[$time]" +
+      $(if (-Not $exitOk) { "$f_deft C: $f_red$exitCode " }))
 
   return "$f_red>" * ($nestedPromptLevel + 1) + "$f_deft "
 }

@@ -2,7 +2,7 @@
 if (Test-Path $PSScriptRoot\config.ps1 -PathType Leaf) {
   . $PSScriptRoot\config.ps1
 }
-$user_path = if (Test-Path env:OneDrive) {
+$USER_PATH = if (Test-Path env:OneDrive) {
   (Get-Item $env:OneDrive).Parent.FullName
 } else {
   (Get-Item $env:HOMEPATH).FullName
@@ -18,18 +18,14 @@ Set-PSReadlineKeyHandler -Key ctrl+d -Function DeleteCharOrExit
 Set-Alias exp      explorer.exe
 Set-Alias poweroff Stop-Computer
 Set-Alias reboot   Restart-Computer
-## Unix-shell-like command
+## Unix-like command
 Set-Alias touch New-Item
 Set-Alias grep  findstr
-# Applications
-Set-Alias vi  nvim.exe
-Set-Alias vim nvim.exe
-Set-Alias bld blender.exe
 
 # Set-Location
-function cdd { Set-Location $user_path\Desktop }
+function cdd { Set-Location $USER_PATH\Desktop }
 
-function cdh { Set-Location $user_path }
+function cdh { Set-Location $USER_PATH }
 
 function cdg {
   $git_root = git_root
@@ -123,15 +119,17 @@ function unproxy {
 }
 
 # Neovim
-function gvim { nvim-qt.exe -- }
+function vim { nvim.exe --cmd "let g:nvim_init_src=''" $args }
 
-function vims { nvim.exe -S $args }
+function gvim { nvim-qt.exe -qwindowgeometry 1280x800 -- --cmd "let g:nvim_init_src=''" $args }
 
-function gvims { nvim-qt.exe -- -S $args }
+function vims { vim -S $args }
 
-function vim. { nvim.exe $executionContext.SessionState.Path.CurrentLocation }
+function gvims { gvim -S $args }
 
-function gvim. { nvim-qt.exe $executionContext.SessionState.Path.CurrentLocation }
+function vim. { vim $executionContext.SessionState.Path.CurrentLocation }
+
+function gvim. { gvim $executionContext.SessionState.Path.CurrentLocation }
 
 function nano { nvim.exe --cmd "let g:nvim_init_src='nano'" $args }
 

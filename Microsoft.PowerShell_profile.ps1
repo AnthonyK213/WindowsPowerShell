@@ -106,9 +106,9 @@ function editConfig {
 
 # Configure the porxy.
 function proxy {
-  git.exe config --global http.proxy $user_proxy
-  git.exe config --global https.proxy $user_proxy
-  editConfig $HOME\.curlrc '^proxy\s*=\s*.*$' "proxy=$user_proxy"
+  git.exe config --global http.proxy $USER_PROXY
+  git.exe config --global https.proxy $USER_PROXY
+  editConfig $HOME\.curlrc '^proxy\s*=\s*.*$' "proxy=$USER_PROXY"
 }
 
 # No proxy.

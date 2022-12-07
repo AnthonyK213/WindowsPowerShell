@@ -11,7 +11,10 @@ $RUSTUP_DIST_SERVER = "https://mirrors.tuna.tsinghua.edu.cn/rustup"
 
 # Key bindings.
 Set-PSReadLineOption -EditMode Emacs
-Set-PSReadlineKeyHandler -Key ctrl+d -Function DeleteCharOrExit
+Set-PSReadlineKeyHandler -Chord "Ctrl+d" -Function DeleteCharOrExit
+Set-PSReadlineKeyHandler -Key Tab -Function MenuComplete
+Set-PSReadlineKeyHandler -Key UpArrow -Function HistorySearchBackward
+Set-PSReadlineKeyHandler -Key DownArrow -Function HistorySearchForward
 
 # Alias
 ## System function

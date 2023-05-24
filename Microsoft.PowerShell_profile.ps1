@@ -174,7 +174,8 @@ function prompt {
           else { "$f_green o " }) 
   }
 
-  Write-Host("$f_blue" + "PS-[$codepage]" + $(if ($isAdmin)
+  Write-Host("$f_deft$env:CONDA_PROMPT_MODIFIER" +
+        "$f_blue" + "PS-[$codepage]" + $(if ($isAdmin)
         { "$f_red [ADMIN] $f_grey@ $f_red$env:ComputerName" } else
         { "$f_cyan $env:UserName $f_grey@ $f_green$env:ComputerName" }) +
       "$f_grey in $f_yellow$location $git_info" + "$f_deft[$time]" +

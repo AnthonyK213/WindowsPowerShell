@@ -109,16 +109,24 @@ function editConfig {
 
 # Configure the porxy.
 function proxy {
+  $env:HTTPS_PROXY = $USER_PROXY
+  $env:HTTP_PROXY = $USER_PROXY
+  $env:ALL_PROXY = $USER_PROXY
   git.exe config --global http.proxy $USER_PROXY
   git.exe config --global https.proxy $USER_PROXY
   editConfig $HOME\.curlrc '^proxy\s*=\s*.*$' "proxy=$USER_PROXY"
+  Write-Host "Set proxy to $USER_PROXY"
 }
 
 # No proxy.
 function unproxy {
+  $env:HTTPS_PROXY = $null
+  $env:HTTP_PROXY = $null
+  $env:ALL_PROXY = $null
   git.exe config --global --unset http.proxy
   git.exe config --global --unset https.proxy
   editConfig $HOME\.curlrc '^proxy\s*=\s*.*$'
+  Write-Host "Unset proxy"
 }
 
 # Neovim

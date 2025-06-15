@@ -1,20 +1,14 @@
-# Varialbles
+# Source config
 if (Test-Path $PSScriptRoot\config.ps1 -PathType Leaf) {
   . $PSScriptRoot\config.ps1
 }
-$USER_PATH = if (Test-Path env:OneDrive) {
-  (Get-Item $env:OneDrive).Parent.FullName
-} else {
-  (Get-Item $env:HOMEPATH).FullName
-}
-$RUSTUP_DIST_SERVER = "https://mirrors.tuna.tsinghua.edu.cn/rustup"
 
 # Key bindings.
-Set-PSReadLineOption -EditMode Emacs
+Set-PSReadLineOption     -EditMode Emacs
+Set-PSReadlineKeyHandler -Key Tab        -Function MenuComplete
+Set-PSReadlineKeyHandler -Key UpArrow    -Function HistorySearchBackward
+Set-PSReadlineKeyHandler -Key DownArrow  -Function HistorySearchForward
 Set-PSReadlineKeyHandler -Chord "Ctrl+d" -Function DeleteCharOrExit
-Set-PSReadlineKeyHandler -Key Tab -Function MenuComplete
-Set-PSReadlineKeyHandler -Key UpArrow -Function HistorySearchBackward
-Set-PSReadlineKeyHandler -Key DownArrow -Function HistorySearchForward
 
 # Alias
 ## System function
@@ -26,20 +20,24 @@ Set-Alias touch New-Item
 Set-Alias grep  findstr
 
 # Set-Location
-function cdd { Set-Location $USER_PATH\Desktop }
-
-function cdh { Set-Location $USER_PATH }
-
+function cdd {
+  $desktopPath = [Environment]::GetFolderPath("Desktop")
+  Set-Location $desktopPath
+}
+function cdh {
+  $personalPath = [Environment]::GetFolderPath("Personal")
+  Set-Location (Get-Item $personalPath).Parent.FullName
+}
 function cdg {
-  $git_root = git_root
-  if ($git_root -eq 0) {
+  $gitRoot = get_git_root
+  if ($gitRoot -eq 0) {
     "Not a git repository"
   } else {
-    Set-Location $git_root
+    Set-Location $gitRoot
   }
 }
 
-# Code page.
+# Change code page.
 function chcp {
   if ($args.Count -eq 0) {
     chcp.com
@@ -60,10 +58,10 @@ function chcp {
 function la { Get-ChildItem -Force }
 
 # Launch `explore.exe`.
-function exp. { explorer . }
+function exp. { explorer.exe . }
 
 # Get git root. If not a git repository, return 0.
-function git_root {
+function get_git_root {
   $dir = $executionContext.SessionState.Path.CurrentLocation.Path
   while (1) {
     if (Test-Path "$dir\.git" -PathType Container) { return $dir }
@@ -73,12 +71,12 @@ function git_root {
 }
 
 # Get git branch. If not a git repository, return 0.
-function git_branch {
-  $git_root = git_root
-  if ($git_root -ne 0) {
+function get_git_branch {
+  $gitRoot = get_git_root
+  if ($gitRoot -ne 0) {
     try {
-      $git_head = Get-Item -Force $git_root\.git\HEAD
-      return @(@(Get-Content $git_head)[0] -split "/")[-1]
+      $gitHead = Get-Item -Force $gitRoot\.git\HEAD
+      return @(@(Get-Content -Encoding utf8 $gitHead)[0] -split "/")[-1]
     }
     catch { }
   }
@@ -86,108 +84,103 @@ function git_branch {
 }
 
 # Edit a config file according to a regex pattern.
-# editConfig(file_path, pattern, replace)
-function editConfig {
+# edit_config_file(filePath, pattern, replace)
+function edit_config_file {
   if ($args.Count -eq 3) {
-    $file_path = $args[0]
-    $pattern = $args[1]
-    $new_line = $args[2]
-    $file_content = Get-Content $file_path
-    if (($file_content | ForEach-Object { $_ -match $pattern }) -contains $true) {
-      $file_content -replace $pattern, $new_line | Set-Content $file_path
-    } else {
-      Add-Content -Path $file_path -Value $new_line
+    $filePath = $args[0]
+    $pattern  = $args[1]
+    $newLine  = $args[2]
+    if (Test-Path $filePath -PathType Leaf) {
+      $fileContent = Get-Content $filePath
+      if (($fileContent | ForEach-Object { $_ -match $pattern }) -contains $true) {
+        $fileContent -replace $pattern, $newLine | Set-Content $filePath
+      } else {
+        Add-Content -Path $filePath -Value $newLine
+      }
     }
   } elseif ($args.Count -eq 2) {
-    $file_path = $args[0]
-    $pattern = $args[1]
-    $file_content -replace $pattern, "" | Set-Content $file_path
+    $filePath = $args[0]
+    $pattern  = $args[1]
+    if (Test-Path $filePath -PathType Leaf) {
+      $fileContent -replace $pattern, "" | Set-Content $filePath
+    }
   } else {
     "Invalid argument"
   }
 }
 
-# Configure the porxy.
+# Set porxy.
 function proxy {
+  if ($null -eq $USER_PROXY) {
+    Write-Host "USER_PROXY was not set"
+    return
+  }
   $env:HTTPS_PROXY = $USER_PROXY
-  $env:HTTP_PROXY = $USER_PROXY
-  $env:ALL_PROXY = $USER_PROXY
-  git.exe config --global http.proxy $USER_PROXY
-  git.exe config --global https.proxy $USER_PROXY
-  editConfig $HOME\.curlrc '^proxy\s*=\s*.*$' "proxy=$USER_PROXY"
+  $env:HTTP_PROXY  = $USER_PROXY
+  $env:ALL_PROXY   = $USER_PROXY
+  git config --global http.proxy  $USER_PROXY
+  git config --global https.proxy $USER_PROXY
+  edit_config_file $HOME\.curlrc '^proxy\s*=\s*.*$' "proxy=$USER_PROXY"
   Write-Host "Set proxy to $USER_PROXY"
 }
 
-# No proxy.
+# Unset proxy.
 function unproxy {
   $env:HTTPS_PROXY = $null
-  $env:HTTP_PROXY = $null
-  $env:ALL_PROXY = $null
-  git.exe config --global --unset http.proxy
-  git.exe config --global --unset https.proxy
-  editConfig $HOME\.curlrc '^proxy\s*=\s*.*$'
+  $env:HTTP_PROXY  = $null
+  $env:ALL_PROXY   = $null
+  git config --global --unset http.proxy
+  git config --global --unset https.proxy
+  edit_config_file $HOME\.curlrc '^proxy\s*=\s*.*$'
   Write-Host "Unset proxy"
 }
 
 # Neovim
-function vim { nvim.exe --cmd "let g:nvim_init_src=''" $args }
-
-function gvim { nvim-qt.exe -qwindowgeometry 1280x800 -- --cmd "let g:nvim_init_src=''" $args }
-
-function vims { vim -S $args }
-
-function gvims { gvim -S $args }
-
-function vim. { vim $executionContext.SessionState.Path.CurrentLocation }
-
-function gvim. { gvim $executionContext.SessionState.Path.CurrentLocation }
-
-function nano { nvim.exe --cmd "let g:nvim_init_src='nano'" $args }
-
-function gnano { nvim-qt.exe -qwindowgeometry 1280x800 -- --cmd "let g:nvim_init_src='nano'" $args }
+function vim  { nvim --cmd "let g:nvim_init_src=''"     $args }
+function nano { nvim --cmd "let g:nvim_init_src='nano'" $args }
 
 # Prompt style, color scheme from `onedark`.
 function prompt {
-  $exitOk = $?
-  $exitCode = $LASTEXITCODE
-  $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
+  $exitOk    = $?
+  $exitCode  = $LASTEXITCODE
+  $identity  = [Security.Principal.WindowsIdentity]::GetCurrent()
   $principal = [Security.Principal.WindowsPrincipal] $identity
   $adminRole = [Security.Principal.WindowsBuiltInRole]::Administrator
-  $isAdmin = $principal.IsInRole($adminRole)
+  $isAdmin   = $principal.IsInRole($adminRole)
 
-  $location = $executionContext.SessionState.Path.CurrentLocation
-  $dirName = Split-Path $location -leaf
-  $time = Get-Date -Format "HH:mm"
-  $OutputEncoding = [System.Console]::InputEncoding = [System.Console]::OutputEncoding
-  $codepage = $OutputEncoding.BodyName
-  $git_branch = git_branch
-  $git_status = $(git status --porcelain)
+  $location  = $executionContext.SessionState.Path.CurrentLocation
+  $dirName   = Split-Path $location -leaf
+  $time      = Get-Date -Format "HH:mm"
+  $OutputEnc = [System.Console]::InputEncoding = [System.Console]::OutputEncoding
+  $codepage  = $OutputEnc.BodyName
+  $gitBranch = get_git_branch
+  $gitStatus = $(git status --porcelain)
 
   $host.UI.RawUI.WindowTitle = if ($isAdmin) { "[ADMIN] $dirName" } else { "$dirName" }
 
-  $ESC = [char]27
-  $f_deft = "$ESC[39m"
-  $f_black = "$ESC[30m"
-  $f_red = "$ESC[38;5;204m"
-  $f_yellow = "$ESC[38;5;180m"
-  $f_blue = "$ESC[38;5;39m"
-  $f_cyan = "$ESC[38;5;38m"
-  $f_grey = "$ESC[38;5;8m"
-  $f_green = "$ESC[38;5;114m"
+  $ESC        = [char]27
+  $FG_DEFAULT = "$ESC[39m"
+  $FG_BLACK   = "$ESC[30m"
+  $FG_RED     = "$ESC[38;5;204m"
+  $FG_YELLOW  = "$ESC[38;5;180m"
+  $FG_BLUE    = "$ESC[38;5;39m"
+  $FG_CYAN    = "$ESC[38;5;38m"
+  $FG_GREY    = "$ESC[38;5;8m"
+  $FG_GREEN   = "$ESC[38;5;114m"
 
-  $git_info = if ($git_branch -ne 0) {
-    "$f_grey" + "on$f_deft git:$f_cyan$git_branch" +
-      $(if ($git_status -match '^\?\?') { "$f_yellow U " }
-          elseif ($git_status -match '^ M') { "$f_red M " }
-          else { "$f_green o " }) 
+  $gitInfo = if ($gitBranch -ne 0) {
+    "$FG_GREY" + "on$FG_DEFAULT git:$FG_CYAN$gitBranch" +
+      $(if ($gitStatus -match '^\?\?') { "$FG_YELLOW U " }
+          elseif ($gitStatus -match '^ M') { "$FG_RED M " }
+          else { "$FG_GREEN o " }) 
   }
 
-  Write-Host("$f_deft$env:CONDA_PROMPT_MODIFIER" +
-        "$f_blue" + "PS-[$codepage]" + $(if ($isAdmin)
-        { "$f_red [ADMIN] $f_grey@ $f_red$env:ComputerName" } else
-        { "$f_cyan $env:UserName $f_grey@ $f_green$env:ComputerName" }) +
-      "$f_grey in $f_yellow$location $git_info" + "$f_deft[$time]" +
-      $(if (-Not $exitOk) { "$f_deft C: $f_red$exitCode " }))
+  Write-Host("$FG_DEFAULT$env:CONDA_PROMPT_MODIFIER" +
+        "$FG_BLUE" + "PS-[$codepage]" + $(if ($isAdmin)
+        { "$FG_RED [ADMIN] $FG_GREY@ $FG_RED$env:ComputerName" } else
+        { "$FG_CYAN $env:UserName $FG_GREY@ $FG_GREEN$env:ComputerName" }) +
+      "$FG_GREY in $FG_YELLOW$location $gitInfo" + "$FG_DEFAULT[$time]" +
+      $(if (-Not $exitOk) { "$FG_DEFAULT C: $FG_RED$exitCode " }))
 
-  return "$f_red>" * ($nestedPromptLevel + 1) + "$f_deft "
+  return "$FG_RED>" * ($nestedPromptLevel + 1) + "$FG_DEFAULT "
 }
